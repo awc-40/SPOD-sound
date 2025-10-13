@@ -57,7 +57,7 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_v2(Z,m,Stidx,md,absx,ch
     nx       = length(xs);           % Number of axial grid points
     nr       = length(rs);           % Numer of radial grid points
 
-    % 7) Loop over the polar angles
+    % 2) Loop over the polar angles
     pmfb       = zeros([n,1]);       % Initialise
     pmfbij     = zeros([n,3]);       % Initialise
     pmfbgij    = zeros([n,nx,nr,3]); % Initialise
