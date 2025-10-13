@@ -65,13 +65,13 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
         end
     end
 
-    % 2) Calculate Green's function frequency factor
+    % 3) Calculate Green's function frequency factor
     ffac = -(omega^2)/(2*(c0^2));
     if m>0
         ffac = ffac*2;               % Accounts for -m. *2 assumes plane symmetry
     end
 
-    % 3) Calculate Green's function directivity factor
+    % 4) Calculate Green's function directivity factor
     Dir    = zeros([1,3]);           % Initialise
     x1     = absx*cos(chi); 
     x2     = absx*sin(chi);
@@ -80,18 +80,18 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
     Dir(3) = x2*x2;
     Dir    = Dir/(absx^3);           % This is the term xi*xj/|x^3|
 
-    % 4) Calculate Green's function phase factor
+    % 5) Calculate Green's function phase factor
     pfac   = exp(-1i*k*absx)*((1i)^m);
 
-    % 5) Calculate overall Green's function prefactor
+    % 6) Calculate overall Green's function prefactor
     prefac = ffac*Dir*pfac;                 % (1,3)
     prefac = reshape(prefac,[1,1,3]);       % (1,1,3)
 
-    % 6) Get trapezoidal quadrature weights and axial taper
+    % 7) Get trapezoidal quadrature weights and axial taper
     weight  = trapzWeightsPolar(rs,xs,md);  % (nx,nr)
     winx    = onesided_hann(nx);            % (nx,1)
 
-    % 7) Compute the spectral far-field pressure
+    % 8) Compute the spectral far-field pressure
     Jmkr    = besselj(m,kr*rs);                                     % Bessel function. (1,nr)
     eikx    = exp(1i*kx*xs);                                        % Axial phase. (nx,1) 
     G       = (1/(2*pi))*prefac.*Jmkr.*eikx.*weight;                % Green's function. (nx,nr,3)
