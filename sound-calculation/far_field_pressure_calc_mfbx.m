@@ -16,7 +16,9 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
     %          the components of the Lighthill source for the chosen azimuthal 
     %          mode m, Strouhal index Stidx and block. The final 
     %          dimension has size 3 to accommodate T_xx, T_xy and T_yy.
-    % m:       Azimuthal mode of the source. Nonnegative integer.
+    % m:       Azimuthal mode of the source. Nonnegative integer. Note that if 
+    %          m = 0 and Stidx > 1, we divide Z by 2 to undo the one-sided spectrum correction
+    %          from create_dft_blocks.m
     % Stidx:   Strouhal index. Integer between 1 and length of the Strouhal
     %          vector.
     % md:      String. If md is 'r', calculate for the round jet. 'c' is
@@ -54,6 +56,14 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
     kr       = k*sin(chi);           % Radial wavenumber
     nx       = length(xs);           % Number of axial grid points
     nr       = length(rs);           % Numer of radial grid points
+
+    % 2) If m = 0 and Stidx > 1, undo the doubling from create_dft_blocks
+    %  which was correcting for the one-sided spectrum. 
+    if m == 0
+        if Stidx > 1
+            Z = Z/2;
+        end
+    end
 
     % 2) Calculate Green's function frequency factor
     ffac = -(omega^2)/(2*(c0^2));
