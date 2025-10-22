@@ -1,4 +1,4 @@
-function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_v2(Z,m,Stidx,md,absx,chis,rs,xs,usewinx,opts)
+function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_v2(Z,m,Stidx,md,absx,chis,rs,xs,usewinx,usebspur,usebex,opts)
 
     % DESCRIPTION ---------------------------------------------------------
     % Version 2 of the far field pressure calculation of the full (no SPOD)
@@ -64,7 +64,7 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_v2(Z,m,Stidx,md,absx,ch
     for chidx  = 1:n
         chi                   = chis(chidx);
         [Pmfb,Pmfbij,Pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx, ...
-                                                            chi,rs,xs,usewinx,opts);
+                                                            chi,rs,xs,usewinx,usebspur,usebex,opts);
         pmfbgij(chidx,:,:,:)  = Pmfbgij;       % Assign
         pmfbij(chidx,:)       = Pmfbij;        % Assign
         pmfb(chidx)           = Pmfb;          % Assign
