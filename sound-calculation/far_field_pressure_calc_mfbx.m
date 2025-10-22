@@ -1,4 +1,4 @@
-function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,chi,rs,xs,usewinx,opts)
+function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,chi,rs,xs,usewinx,usebspur,usebex,opts)
 
     % DESCRIPTION ---------------------------------------------------------
     % Far field spectral pressure calculation p\hat(x,f) for one azimuthal mode (m),
@@ -11,25 +11,27 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
     % ~/AWC/SPOD-sound/lighthill-modes-pure
     %
     % INPUTS --------------------------------------------------------------
-    % Z:       Complex array of size (nx,nr,3), where nx is the number of axial
-    %          grid points and nr is the number of radial grid points. Contains 
-    %          the components of the Lighthill source for the chosen azimuthal 
-    %          mode m, Strouhal index Stidx and block. The final 
-    %          dimension has size 3 to accommodate T_xx, T_xy and T_yy.
-    % m:       Azimuthal mode of the source. Nonnegative integer. Note that if 
-    %          m = 0 and Stidx > 1, we divide Z by 2 to undo the one-sided spectrum correction
-    %          from create_dft_blocks.m
-    % Stidx:   Strouhal index. Integer between 1 and length of the Strouhal
-    %          vector.
-    % md:      String. If md is 'r', calculate for the round jet. 'c' is
-    %          for the chevron jet
-    % absx:    The distance |x| between the nozzle and the observer in 
-    %          meters.
-    % chi:     Polar angle of the observer in degrees
-    % rs:      Vector of dimensionless radial points of size (1,nr).
-    % xs:      Vector of dimensionless axial points of size (nx,1).
-    % usewinx: Boolean. 1 = use one-sided axial taper. 0 = don't use. 
-    % opts:    See INPUT section of function 'dft_parameters' below.
+    % Z:        Complex array of size (nx,nr,3), where nx is the number of axial
+    %           grid points and nr is the number of radial grid points. Contains 
+    %           the components of the Lighthill source for the chosen azimuthal 
+    %           mode m, Strouhal index Stidx and block. The final 
+    %           dimension has size 3 to accommodate T_xx, T_xy and T_yy.
+    % m:        Azimuthal mode of the source. Nonnegative integer. Note that if 
+    %           m = 0 and Stidx > 1, we divide Z by 2 to undo the one-sided spectrum correction
+    %           from create_dft_blocks.m
+    % Stidx:    Strouhal index. Integer between 1 and length of the Strouhal
+    %           vector.
+    % md:       String. If md is 'r', calculate for the round jet. 'c' is
+    %           for the chevron jet
+    % absx:     The distance |x| between the nozzle and the observer in 
+    %           meters.
+    % chi:      Polar angle of the observer in degrees
+    % rs:       Vector of dimensionless radial points of size (1,nr).
+    % xs:       Vector of dimensionless axial points of size (nx,1).
+    % usewinx:  Boolean. 1 = use one-sided axial taper. 0 = don't use. 
+    % usebspur: Use blank for spuriously large values near the nozzle
+    % usebex:   Use the 'excessive' blank, which blanks from 0<=x<=1 and 0<=r<=0.5
+    % opts:     See INPUT section of function 'dft_parameters'.
     %
     % OUTPUTS -------------------------------------------------------------
     % pmfb:    Contribution of a chosen azimuthal and frequency mode and
@@ -65,13 +67,26 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
         end
     end
 
-    % 3) Calculate Green's function frequency factor
+    % 3) Optionally apply the spurious blank or the excessive blank
+    if usebspur == 1
+        load('~/AWC/SPOD-sound/density-and-pressure-checks/idxspur.mat','idxspur')
+        for i = 1:size(idxspur,1)
+            Z(idxspur(i,1),idxspur(i,2),:) = 0;
+        end
+    elseif usebex == 1
+        load('~/AWC/SPOD-sound/density-and-pressure-checks/idxex.mat','idxex')
+        for i = 1:size(idxex,1)
+            Z(idxex(i,1),idxex(i,2),:) = 0;
+        end
+    end
+
+    % 4) Calculate Green's function frequency factor
     ffac = -(omega^2)/(2*(c0^2));
     if m>0
         ffac = ffac*2;               % Accounts for -m. *2 assumes plane symmetry
     end
 
-    % 4) Calculate Green's function directivity factor
+    % 5) Calculate Green's function directivity factor
     Dir    = zeros([1,3]);           % Initialise
     x1     = absx*cos(chi); 
     x2     = absx*sin(chi);
@@ -80,18 +95,18 @@ function [pmfb,pmfbij,pmfbgij] = far_field_pressure_calc_mfbx(Z,m,Stidx,md,absx,
     Dir(3) = x2*x2;
     Dir    = Dir/(absx^3);           % This is the term xi*xj/|x^3|
 
-    % 5) Calculate Green's function phase factor
+    % 6) Calculate Green's function phase factor
     pfac   = exp(-1i*k*absx)*((1i)^m);
 
-    % 6) Calculate overall Green's function prefactor
+    % 7) Calculate overall Green's function prefactor
     prefac = ffac*Dir*pfac;                 % (1,3)
     prefac = reshape(prefac,[1,1,3]);       % (1,1,3)
 
-    % 7) Get trapezoidal quadrature weights and axial taper
+    % 8) Get trapezoidal quadrature weights and axial taper
     weight  = trapzWeightsPolar(rs,xs,md);  % (nx,nr)
     winx    = onesided_hann(nx);            % (nx,1)
 
-    % 8) Compute the spectral far-field pressure
+    % 9) Compute the spectral far-field pressure
     Jmkr    = besselj(m,kr*rs);                                     % Bessel function. (1,nr)
     eikx    = exp(1i*kx*xs);                                        % Axial phase. (nx,1) 
     G       = (1/(2*pi))*prefac.*Jmkr.*eikx.*weight;                % Green's function. (nx,nr,3)
