@@ -10,6 +10,7 @@ function Z = loadlhmode(m,fidx,bidx,md)
     %       to St = 1.98. Only 52 saved modes. 
     % bidx: Block index. Integer between 1 and 22. Based on block
     %       parameters nDFT=256, novlp=128, nT=3000. 
+    % md:   'r' = round jet. 'c' = chevron jet.
     %
     % OUTPUTS -------------------------------------------------------------
     % Z:    Lighthill mode. Complex array of shape (nx,nr,3), where nx=576
