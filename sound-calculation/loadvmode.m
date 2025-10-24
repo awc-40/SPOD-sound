@@ -10,7 +10,7 @@ function [Q_blk_hat_fi] = loadvmode(m,fidx,bidx,md)
     %       to St = 1.98. Only 52 saved modes. 
     % bidx: Block index. Integer between 1 and 22. Based on block
     %       parameters nDFT=256, novlp=128, nT=3000. 
-    %
+    % md:   'r' = round jet. 'c' = chevron jet.
     % OUTPUTS -------------------------------------------------------------
     % Z:    Lighthill mode. Complex array of shape (nx,nr,2), where nx=576
     %       is the number of axial grid points and nr=81 is the number of 
